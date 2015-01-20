@@ -147,11 +147,12 @@ class HtmlCrawlDown {
      * 
      * @param type $urls
      * @param type $save_dir 保存路径
+     * @param type $base_url url根路径
      */
-    public static function down($urls, $save_dir) {
+    public static function down($urls, $save_dir, $base_url = "") {
 
         foreach ($urls as $key => $url) {
-            $thread_array[$key] = new HtmlCrawlDownThread($url, $save_dir);
+            $thread_array[$key] = new HtmlCrawlDownThread($base_url . $url, $save_dir);
             $thread_array[$key]->start();
         }
 
