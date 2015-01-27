@@ -67,6 +67,42 @@ class HtmlCrawlDownThread extends Thread {
     private $__saveDir;
     public $error = null;
 
+    
+    public function parseUrl($url){
+        
+        $array = parse_url($url);
+        
+        $path = $array['path'];
+        
+        $path_a = explode("/", $path);
+        foreach($path_a as $k=>$vo){
+            $path_a[$k] = rawurlencode(rawurldecode($vo));
+        }
+        $path = implode("/", $path_a);
+        
+        $query = isset($array['query']) ? $array['query'] : "";
+        
+        if($query){
+            parse_str($query, $arr);
+            $query_str = array();
+            foreach($arr as $k => $v){
+                $query_str[] = $k ."=" . rawurlencode($v);
+            }
+            $query = implode("&", $query_str);
+        }
+        
+        
+        
+        
+        $fragment = isset($array['fragment']) ? $array['fragment'] : "";
+        
+        $url = $array['scheme'] . "://" .$array['host'] . $path . ($query ? "?$query" : "") . ($fragment ? "#$fragment" : "");
+        
+      
+        return $url;
+        
+    }
+    
     public function saveFromUrl() {
 
         $array = parse_url($this->__url);
@@ -77,33 +113,32 @@ class HtmlCrawlDownThread extends Thread {
             mkdir(dirname($file), 0777, true);
         }
 
-        
+
         $ext = substr($file, strrpos($file, ".") + 1);
-        if (in_array($ext, array("jpg","jpeg","png","gif")) && is_file($file) && getimagesize($file)) {
+        if (in_array($ext, array("jpg", "jpeg", "png", "gif")) && is_file($file) && getimagesize($file)) {
             //图片已经下载过了
             return true;
-        }elseif(is_file($file)){
+        } elseif (is_file($file)) {
             //文件已经下载过了
             return true;
         }
 
-        $userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:31.0) Gecko/20100101 Firefox/31.0";
-        $header    = array('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
-
-        $url = $this->__url;
-
-        $array = explode("/", $url);
-
-        foreach ($array as $k => &$v) {
-            if ($k > 2) {
-                $v = rawurlencode($v);
-            }
+       // $userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:31.0) Gecko/20100101 Firefox/31.0";
+        
+        $headers ['User-Agent']      = 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; .NET4.0C; .NET4.0E; InfoPath.3)';
+        $headers ['Accept']          = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+        $headers ['Accept-Encoding'] = 'gzip, deflate';
+        $headers ['Accept-Language'] = 'zh-cn,zh;q=0.8,en-us;q=0.5,en;q=0.3';
+        $headers ['Connection']      = 'keep-alive';
+        $headerArr                   = array();
+        foreach ($headers as $n => $v) {
+            $headerArr [] = $n . ': ' . $v;
         }
-
+ 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, implode("/", $array));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-        curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
+        curl_setopt($ch, CURLOPT_URL, $this->parseUrl($this->__url));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headerArr);
+        //curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
         //ssl
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
